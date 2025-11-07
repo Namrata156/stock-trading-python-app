@@ -1,0 +1,80 @@
+2025-11-06 17:34:37,318 - INFO - Running initial job...
+2025-11-06 17:34:37,318 - INFO - Starting ticker metadata collection
+2025-11-06 17:34:40,897 - ERROR - Error collecting metadata: 1071 (42000): Specified key was too long; max key length is 3072 bytes
+2025-11-06 17:34:40,900 - INFO - Scheduled next run for midnight
+2025-11-06 17:37:02,679 - INFO - Scheduler stopped by user
+2025-11-06 17:38:54,864 - INFO - Running initial job...
+2025-11-06 17:38:54,864 - INFO - Starting ticker metadata collection
+2025-11-06 17:38:57,677 - ERROR - Error collecting metadata: 1054 (42S22): Unknown column 'name' in 'field list'
+2025-11-06 17:38:57,677 - INFO - Scheduled next run for midnight
+2025-11-06 17:39:41,002 - INFO - Scheduler stopped by user
+2025-11-06 17:42:35,966 - INFO - Running initial job...
+2025-11-06 17:42:35,966 - INFO - Starting ticker metadata collection
+2025-11-06 17:42:38,562 - ERROR - Error collecting metadata: 1054 (42S22): Unknown column 'company_name' in 'field list'
+2025-11-06 17:42:38,562 - INFO - Scheduled next run for midnight
+2025-11-06 17:44:11,897 - INFO - Scheduler stopped by user
+2025-11-06 17:45:00,523 - INFO - Running initial job...
+2025-11-06 17:45:00,523 - INFO - Starting ticker metadata collection
+2025-11-06 17:45:02,811 - ERROR - Error collecting metadata: 1054 (42S22): Unknown column 'name' in 'field list'
+2025-11-06 17:45:02,813 - INFO - Scheduled next run for midnight
+2025-11-06 17:46:26,620 - INFO - Scheduler stopped by user
+2025-11-06 17:46:51,151 - INFO - Running initial job...
+2025-11-06 17:46:51,152 - INFO - Starting ticker metadata collection
+2025-11-06 17:46:54,645 - ERROR - Error collecting metadata: 1062 (23000): Duplicate entry 'BCpC' for key 'tickers_stocks.PRIMARY'
+2025-11-06 17:46:54,645 - INFO - Scheduled next run for midnight
+2025-11-06 17:47:08,220 - INFO - Scheduler stopped by user
+2025-11-06 20:03:30,731 - INFO - Running initial job...
+2025-11-06 20:03:30,732 - INFO - Starting ticker metadata collection
+2025-11-06 20:03:38,062 - INFO - Completed ticker metadata collection
+2025-11-06 20:03:38,062 - INFO - Scheduled next run for midnight
+2025-11-06 20:03:40,815 - INFO - Scheduler stopped by user
+2025-11-06 20:03:56,652 - INFO - Running initial job...
+2025-11-06 20:03:56,652 - INFO - Starting ticker metadata collection
+2025-11-06 20:03:56,970 - INFO - Completed ticker metadata collection
+2025-11-06 20:03:56,970 - INFO - Scheduled next run for midnight
+2025-11-06 20:04:10,260 - INFO - Scheduler stopped by user
+2025-11-06 20:04:14,450 - INFO - Running initial job...
+2025-11-06 20:04:14,450 - INFO - Starting ticker metadata collection
+2025-11-06 20:04:14,766 - INFO - Completed ticker metadata collection
+2025-11-06 20:04:14,768 - INFO - Scheduled next run for midnight
+2025-11-06 20:04:25,953 - INFO - Scheduler stopped by user
+2025-11-06 20:10:30,599 - INFO - Running initial job...
+2025-11-06 20:10:30,622 - INFO - Starting ticker metadata collection
+2025-11-06 20:10:30,910 - INFO - Completed ticker metadata collection
+2025-11-06 20:10:30,912 - INFO - Scheduled next run for midnight
+2025-11-06 20:10:41,975 - INFO - Scheduler stopped by user
+2025-11-06 20:13:29,968 - INFO - Running initial job...
+2025-11-06 20:13:29,968 - INFO - Starting ticker metadata collection
+2025-11-06 20:13:37,315 - INFO - Completed ticker metadata collection
+2025-11-06 20:13:37,316 - INFO - Scheduled next run for midnight
+2025-11-06 20:13:40,150 - INFO - Scheduler stopped by user
+2025-11-06 20:17:46,875 - INFO - Running initial job...
+2025-11-06 20:17:46,880 - INFO - Starting ticker metadata collection
+2025-11-06 20:17:52,782 - INFO - Completed ticker metadata collection
+2025-11-06 20:17:52,782 - INFO - Scheduled next run for midnight
+2025-11-06 20:17:55,707 - INFO - Scheduler stopped by user
+2025-11-06 20:19:42,050 - INFO - Running initial job...
+2025-11-06 20:19:42,050 - INFO - Starting ticker metadata collection
+2025-11-06 20:19:42,654 - ERROR - Error collecting metadata: 1406 (22001): Data too long for column 'currency_name' at row 1
+2025-11-06 20:19:42,654 - INFO - Scheduled next run for midnight
+2025-11-06 20:19:54,913 - INFO - Scheduler stopped by user
+2025-11-06 20:20:48,943 - INFO - Running initial job...
+2025-11-06 20:20:48,943 - INFO - Starting ticker metadata collection
+2025-11-06 20:20:50,112 - INFO - Completed ticker metadata collection
+2025-11-06 20:20:50,112 - INFO - Scheduled next run for midnight
+2025-11-06 20:20:54,664 - INFO - Scheduler stopped by user
+2025-11-06 20:22:59,286 - INFO - Running initial job...
+2025-11-06 20:22:59,292 - INFO - Starting ticker metadata collection
+2025-11-06 20:23:00,488 - INFO - Completed ticker metadata collection
+2025-11-06 20:23:00,488 - INFO - Scheduled next run for midnight
+2025-11-06 20:23:30,200 - INFO - Scheduler stopped by user
+2025-11-06 20:24:39,878 - INFO - Running initial job...
+2025-11-06 20:24:39,878 - INFO - Starting ticker metadata collection
+2025-11-06 20:24:42,415 - INFO - Completed ticker metadata collection
+2025-11-06 20:24:42,416 - INFO - Scheduled next run for midnight
+2025-11-06 20:24:46,104 - INFO - Scheduler stopped by user
+2025-11-06 23:31:25,814 - INFO - Running initial job...
+2025-11-06 23:31:25,814 - INFO - Starting ticker metadata collection
+2025-11-06 23:31:34,098 - INFO - Completed ticker metadata collection
+2025-11-06 23:31:34,098 - INFO - Scheduled next run for midnight
+2025-11-06 23:31:38,891 - INFO - Scheduler stopped by user

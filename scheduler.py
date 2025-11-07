@@ -1,18 +1,45 @@
 import schedule
 import time
+import logging
+from datetime import datetime
 from script import run_stock_job
 
-from datetime import datetime
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('stock_scheduler.log'),
+        logging.StreamHandler()
+    ]
+)
 
-def basic_job():
-    print("Job started at:", datetime.now())
+def wrapped_stock_job():
+    """Wrapper for metadata collection with error handling"""
+    try:
+        logging.info("Starting ticker metadata collection")
+        run_stock_job()
+        logging.info("Completed ticker metadata collection")
+    except Exception as e:
+        logging.error(f"Error collecting metadata: {str(e)}")
 
-# Run every minute
-schedule.every().minute.do(basic_job)
+def main():
+    # Run immediately first
+    logging.info("Running initial job...")
+    wrapped_stock_job()
+    
+    # Then schedule for midnight
+    schedule.every().day.at("00:00").do(wrapped_stock_job)
+    logging.info("Scheduled next run for midnight")
+    
+    while True:
+        schedule.run_pending()
+        time.sleep(300)  # Check every 5 minutes
 
-# Run every minute
-schedule.every().minute.do(run_stock_job)
-
-while True:
-    schedule.run_pending()
-    time.sleep(1)
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        logging.info("Scheduler stopped by user")
+    except Exception as e:
+        logging.error(f"Scheduler error: {str(e)}")
