@@ -1,76 +1,133 @@
 import requests
 import os
 import csv
-
+import time
+from datetime import datetime
 from dotenv import load_dotenv
 import mysql.connector
-from datetime import datetime 
 
 load_dotenv()
+
+# Rate-limit / delay control (can be overridden via .env)
+RATE_LIMIT_CALLS_PER_MIN = int(os.getenv("RATE_LIMIT_CALLS_PER_MIN", "5"))  # polygon free = 5
+EXTRA_DELAY_SECONDS = float(os.getenv("EXTRA_DELAY_SECONDS", "0"))         # extra safety delay
+MAX_RETRIES = int(os.getenv("API_MAX_RETRIES", "3"))
+
+MIN_INTERVAL = 60.0 / max(1, RATE_LIMIT_CALLS_PER_MIN)  # seconds between calls
+MIN_INTERVAL += EXTRA_DELAY_SECONDS
+
+_last_api_call_ts = 0.0  # module-level tracker
+
+
+def make_api_call(raw_url, api_key, timeout=15):
+    """
+    Call Polygon API with rate limiting and retry/backoff.
+    - ensures at least MIN_INTERVAL between calls
+    - retries on 429 / transient errors with exponential backoff
+    - appends apiKey if missing
+    """
+    global _last_api_call_ts
+
+    # ensure apiKey is present
+    if "apiKey=" not in raw_url:
+        if "?" in raw_url:
+            url = raw_url + f"&apiKey={api_key}"
+        else:
+            url = raw_url + f"?apiKey={api_key}"
+    else:
+        url = raw_url
+
+    attempt = 0
+    while attempt < MAX_RETRIES:
+        # enforce minimum interval between calls
+        now = time.time()
+        elapsed = now - _last_api_call_ts
+        if elapsed < MIN_INTERVAL:
+            to_wait = MIN_INTERVAL - elapsed
+            time.sleep(to_wait)
+
+        try:
+            resp = requests.get(url, timeout=timeout)
+            # update timestamp immediately after request to account for call
+            _last_api_call_ts = time.time()
+
+            if resp.status_code == 429:
+                # rate limited — wait and retry with backoff
+                backoff = (2 ** attempt) * MIN_INTERVAL
+                time.sleep(backoff)
+                attempt += 1
+                continue
+
+            resp.raise_for_status()
+            # optional: inspect headers like X-RateLimit-Remaining
+            return resp.json()
+        except requests.exceptions.RequestException as e:
+            # transient network errors -> backoff and retry
+            attempt += 1
+            if attempt >= MAX_RETRIES:
+                raise
+            backoff = (2 ** (attempt - 1)) * MIN_INTERVAL
+            time.sleep(backoff)
+
+    # if we exit loop without returning, raise a generic error
+    raise RuntimeError("API call failed after retries")
+
 
 def run_stock_job():
     POLYGON_API_KEY = os.getenv("POLYGON_API_KEY")
     if not POLYGON_API_KEY:
         print("POLYGON_API_KEY not found in environment or .env file.")
         return
-    
+
     LIMIT = 1000
-    url = f"https://api.polygon.io/v3/reference/tickers?market=otc&active=true&order=asc&limit={LIMIT}&sort=ticker&apiKey={POLYGON_API_KEY}"
-    
+    base_url = f"https://api.polygon.io/v3/reference/tickers?market=otc&active=true&order=asc&limit={LIMIT}&sort=ticker"
+
     try:
-        response = requests.get(url, timeout=15)
-        response.raise_for_status()
-        data=response.json()
+        data = make_api_call(base_url, POLYGON_API_KEY)
     except Exception as e:
         print("Error fetching data from Polygon API:", e)
         return
 
     tickers = []
-    # use data already parsed above
-    #print(data)
-    #print(data['next_url'])
-
-    for ticker in data['results']:
-        tickers.append(ticker)
+    tickers.extend(data.get("results", []))
 
     max_pages = 4
     pages_fetched = 0
+    # follow next_url but respect rate limits via make_api_call
+    while data.get("next_url") and pages_fetched < max_pages:
+        next_url = data["next_url"]
+        print("requesting next page", next_url)
+        try:
+            data = make_api_call(next_url, POLYGON_API_KEY)
+        except Exception as e:
+            print("Error fetching next page:", e)
+            break
 
-    while 'next_url' in data and pages_fetched < max_pages:
-        print('requesting next page', data['next_url'])
-        response = requests.get(data['next_url'] + f'&apiKey={POLYGON_API_KEY}')
-        data = response.json()
-        print(data.keys())
-        #print(data)
-
-        if data['results']:
-            for ticker in data['results']:
-                tickers.append(ticker)
-
+        tickers.extend(data.get("results", []))
         pages_fetched += 1
 
     print(len(tickers))
     print(f"Page {pages_fetched+1}: collected {len(tickers)} tickers so far")
 
     example_ticker = {
-                    'ticker': 'BAUG', 
-                    'name': 'Innovator U.S. Equity Buffer ETF - August', 
-                    'market': 'stocks', 
-                    'locale': 'us', 
-                    'primary_exchange': 'BATS', 
-                    'type': 'ETF', 
-                    'active': True, 
-                    'currency_name': 'usd', 
-                    'cik': '0001482688', 
-                    'composite_figi': 'BBG00PVP2Q68', 
-                    'share_class_figi': 'BBG00PVP2QY7', 
-                    'last_updated_utc': '2025-09-20T06:05:17.341691359Z'
-                    }
+        'ticker': 'BAUG',
+        'name': 'Innovator U.S. Equity Buffer ETF - August',
+        'market': 'stocks',
+        'locale': 'us',
+        'primary_exchange': 'BATS',
+        'type': 'ETF',
+        'active': True,
+        'currency_name': 'usd',
+        'cik': '0001482688',
+        'composite_figi': 'BBG00PVP2Q68',
+        'share_class_figi': 'BBG00PVP2QY7',
+        'last_updated_utc': '2025-09-20T06:05:17.341691359Z'
+    }
 
     # Add date_stamp to fieldnames
     fieldnames = list(example_ticker.keys()) + ['date_stamp']
     output_csv = 'tickers_otc.csv'
-    current_date = datetime.now().strftime('%Y-%m-%d')  # <-- Get current date
+    current_date = datetime.now().strftime('%Y-%m-%d')
 
     # Append to CSV instead of overwriting; write header only when file is new
     write_header = not os.path.exists(output_csv)
@@ -86,17 +143,17 @@ def run_stock_job():
 
     # Connect to MySQL and verify connection
     conn = mysql.connector.connect(
-        host="localhost",  # Use localhost when running on your host machine
-        user="stock_user",
-        password="namrata",
-        database="stock_trading_db"
+        host=os.getenv("DB_HOST", "localhost"),
+        user=os.getenv("DB_USER", "stock_user"),
+        password=os.getenv("DB_PASSWORD", "namrata"),
+        database=os.getenv("DB_NAME", "stock_trading_db"),
     )
 
     cursor = conn.cursor()
 
-    # First, drop and recreate table with consistent naming
+    # recreate table (adjust as needed)
     cursor.execute("DROP TABLE IF EXISTS tickers_otc")
-    
+
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS tickers_otc (
         id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -119,13 +176,13 @@ def run_stock_job():
 
     insert_sql = """
         INSERT INTO tickers_otc (
-            ticker, name, market, locale, primary_exchange, 
-            type, active, currency_name, cik, composite_figi, 
+            ticker, name, market, locale, primary_exchange,
+            type, active, currency_name, cik, composite_figi,
             share_class_figi, last_updated_utc, date_stamp
         ) VALUES (
-            %(ticker)s, %(name)s, %(market)s, %(locale)s, 
-            %(primary_exchange)s, %(type)s, %(active)s, 
-            %(currency_name)s, %(cik)s, %(composite_figi)s, 
+            %(ticker)s, %(name)s, %(market)s, %(locale)s,
+            %(primary_exchange)s, %(type)s, %(active)s,
+            %(currency_name)s, %(cik)s, %(composite_figi)s,
             %(share_class_figi)s, %(last_updated_utc)s, %(date_stamp)s
         )
         ON DUPLICATE KEY UPDATE
@@ -146,7 +203,7 @@ def run_stock_job():
     for t in tickers:
         row = {
             'ticker': t.get('ticker', ''),
-            'name': t.get('name', ''),  
+            'name': t.get('name', ''),
             'market': t.get('market', ''),
             'locale': t.get('locale', ''),
             'primary_exchange': t.get('primary_exchange', ''),
@@ -166,6 +223,7 @@ def run_stock_job():
 
     cursor.close()
     conn.close()
+
 
 if __name__ == "__main__":
     run_stock_job()
